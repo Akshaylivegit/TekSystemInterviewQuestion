@@ -1,7 +1,8 @@
 package com.tek.interview.question;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,9 +37,10 @@ Sum of orders: 153.81
  
 ******************************************************************************************** */
 
-/*
- * represents an item, contains a price and a description.
- *
+
+/**
+ * @author Akshay
+ * Represents an Item with properties description, price.
  */
 class Item {
 
@@ -60,19 +62,19 @@ class Item {
 	}
 }
 
-/*
- * represents an order line which contains the @link Item and the quantity.
- *
+/**
+ * @author Akshay
+ * Represents OrderLine with properties quantity, item.
  */
 class OrderLine {
 
 	private int quantity;
 	private Item item;
 
-	/*
-	 * @param item Item of the order
-	 * 
-	 * @param quantity Quantity of the item
+	/**
+	 * @param item - item ordered.
+	 * @param quantity - quantity of item ordered.
+	 * @throws Exception - throws exception if item value is null.
 	 */
 	public OrderLine(Item item, int quantity) throws Exception {
 		if (item == null) {
@@ -80,8 +82,10 @@ class OrderLine {
 			throw new Exception("Item is NULL");
 		}
 		assert quantity > 0;
-		item = item;
-		quantity = quantity;
+		//item = item; Bug -> item which is instance of current class should be initialized to argument values in the constructor.
+		//quantity = quantity; Bug -> quantity which is instance of current class should be initialized to argument values in the constructor.
+		this.item = item;
+		this.quantity = quantity;
 	}
 
 	public Item getItem() {
@@ -93,10 +97,18 @@ class OrderLine {
 	}
 }
 
+/**
+ * @author Akshay
+ * Represents Order with property orderLines representing a list of ordered items. 
+ */
 class Order {
 
-	private List<OrderLine> orderLines;
+	private List<OrderLine> orderLines = new ArrayList<>();
 
+	/**
+	 * @param o - represents a single item in order. 
+	 * @throws Exception - throws exception if OrderLine is null.
+	 */
 	public void add(OrderLine o) throws Exception {
 		if (o == null) {
 			System.err.println("ERROR - Order is NULL");
@@ -118,17 +130,36 @@ class Order {
 	}
 }
 
+/**
+ * @author Akshay
+ * Class used to calculate and display price for each order and item within that order.
+ */
 class calculator {
-
+	
+	/**
+	 * Rounds up value upto two decimal places.  
+	 * @param value - value that needs to be round up.
+	 * @return
+	 */
 	public static double rounding(double value) {
-		return ( (int) (value * 100)) / 100;
+		//return ( (int) (value * 100)) / 100; //-> Displays a round up value without decimal places.
+		//Updated method to display value upto two decimal places.
+		DecimalFormat df=new DecimalFormat("0.00");
+		String formate = df.format(value); 
+		double finalValue = 0;
+		try {
+			finalValue = (Double)df.parse(formate);
+		} catch (ParseException e) {
+			System.err.println(e);
+		}
+		return finalValue;
 	}
 
 	/**
-	 * receives a collection of orders. For each order, iterates on the order lines and calculate the total price which
+	 * Receives a collection of orders. For each order, iterates on the order lines and calculate the total price which
 	 * is the item's price * quantity * taxes.
-	 * 
-	 * For each order, print the total Sales Tax paid and Total price without taxes for this order
+	 * For each order, print the total Sales Tax paid and Total price without taxes for this order.
+	 * @param o - Map representing a collection of all the orders.
 	 */
 	public void calculate(Map<String, Order> o) {
 
@@ -137,50 +168,51 @@ class calculator {
 		// Iterate through the orders
 		for (Map.Entry<String, Order> entry : o.entrySet()) {
 			System.out.println("*******" + entry.getKey() + "*******");
-			grandtotal = 0;
+			//grandtotal = 0; -> Bug - grandtotal should not be assigned to 0.
 
 			Order r = entry.getValue();
-
+			
 			double totalTax = 0;
 			double total = 0;
 
 			// Iterate through the items in the order
-			for (int i = 0; i <= r.size(); i++) {
-
+			for (int i = 0; i < r.size(); i++) {
 				// Calculate the taxes
 				double tax = 0;
-
-				if (r.get(i).getItem().getDescription().contains("imported")) {
-					tax = rounding(r.get(i).getItem().getPrice() * 0.15); // Extra 5% tax on
-					// imported items
+				if (r.get(i).getItem().getDescription().toLowerCase().contains("imported")) { //-> Bug - converted description to lower case so that it should match with the given string.
+					tax = rounding(r.get(i).getItem().getPrice() * 0.15); // Extra 5% tax on imported items 
 				} else {
 					tax = rounding(r.get(i).getItem().getPrice() * 0.10);
 				}
 
 				// Calculate the total price
-				double totalprice = r.get(i).getItem().getPrice() + Math.floor(tax);
+				double totalprice = rounding(r.get(i).getItem().getPrice() + tax);
 
 				// Print out the item's total price
-				System.out.println(r.get(i).getItem().getDescription() + ": " + Math.floor(totalprice));
+				System.out.println(r.get(i).getItem().getDescription() + ": " +totalprice);
 
-				// Keep a running total
+				// Keep a running total of taxes for a order.
 				totalTax += tax;
 				total += r.get(i).getItem().getPrice();
 			}
 
 			// Print out the total taxes
-			System.out.println("Sales Tax: " + Math.floor(totalTax));
+			System.out.println("Sales Tax: " + rounding(totalTax));
 
-			total = total + totalTax;
+			//total = total + totalTax; // -> Bug - no need to add tax into total price of items, because we need to display total price without tax.
 
-			// Print out the total amount
-			System.out.println("Total: " + Math.floor(total * 100) / 100);
+			// Print out the total price of items without tax.
+			System.out.println("Total: " + rounding(total));
 			grandtotal += total;
 		}
-
-		System.out.println("Sum of orders: " + Math.floor(grandtotal * 100) / 100);
+		//Print out sum of all orders without taxes.
+		System.out.println("Sum of orders: " + rounding(grandtotal));
+		
+		//Note: All the values are round up to display the values upto two decimal places. use of Math.floor() method is avoided because it displays 
+		// value without decimal places.
 	}
 }
+
 
 public class Foo {
 
@@ -190,31 +222,33 @@ public class Foo {
 
 		Order c = new Order();
 
-		double grandTotal = 0;
+		//double grandTotal = 0; // No need to declare grandTotal in this class.
 
 		c.add(new OrderLine(new Item("book", (float) 12.49), 1));
 		c.add(new OrderLine(new Item("music CD", (float) 14.99), 1));
 		c.add(new OrderLine(new Item("chocolate bar", (float) 0.85), 1));
-
+		//Adding order to the map.
 		o.put("Order 1", c);
 
 		// Reuse cart for an other order
-		c.clear();
+		//c.clear(); -> Bug - Everytime a new instance of order should be used because it's a new order always.
+		//Using new instance of order also maintains a new list of OrderLines so that the previous list need not be cleared.
+		Order c1 = new Order();
+		
+		c1.add(new OrderLine(new Item("imported box of chocolate", 10), 1));
+		c1.add(new OrderLine(new Item("imported bottle of perfume", (float) 47.50), 1));
 
-		c.add(new OrderLine(new Item("imported box of chocolate", 10), 1));
-		c.add(new OrderLine(new Item("imported bottle of perfume", (float) 47.50), 1));
-
-		o.put("Order 2", c);
+		o.put("Order 2", c1);
 
 		// Reuse cart for an other order
-		c.clear();
+		//c.clear();
+		Order c2 = new Order();
+		c2.add(new OrderLine(new Item("Imported bottle of perfume", (float) 27.99), 1));
+		c2.add(new OrderLine(new Item("bottle of perfume", (float) 18.99), 1));
+		c2.add(new OrderLine(new Item("packet of headache pills", (float) 9.75), 1));
+		c2.add(new OrderLine(new Item("box of imported chocolates", (float) 11.25), 1));
 
-		c.add(new OrderLine(new Item("Imported bottle of perfume", (float) 27.99), 1));
-		c.add(new OrderLine(new Item("bottle of perfume", (float) 18.99), 1));
-		c.add(new OrderLine(new Item("packet of headache pills", (float) 9.75), 1));
-		c.add(new OrderLine(new Item("box of importd chocolates", (float) 11.25), 1));
-
-		o.put("Order 3", c);
+		o.put("Order 3", c2);
 
 		new calculator().calculate(o);
 
